@@ -539,6 +539,10 @@ class LpyCodeEditor(QTextEdit):
         cursor = self.textCursor()
         self.positionLabel.setText('Line '+str(cursor.blockNumber()+1)+', Column '+str(cursor.columnNumber())+' ('+str(cursor.position())+')')
     def keyPressEvent(self,event):
+        if (event.modifiers() & Qt.ControlModifier) and (event.key() == Qt.Key_Semicolon or event.text() == ';'):
+            self.toggleComment()
+            event.accept()
+            return
         if self.hasError:
             self.clearErrorHightlight()
         lcursor = self.textCursor()
@@ -771,6 +775,80 @@ class LpyCodeEditor(QTextEdit):
             cursor.movePosition(QTextCursor.Left,QTextCursor.MoveAnchor)
         cursor.endEditBlock()
         cursor.setPosition(pos,QTextCursor.MoveAnchor)
+    def toggleComment(self):
+        cursor = self.textCursor()
+        doc = self.document()
+        has_sel = cursor.hasSelection()
+        start_pos = cursor.selectionStart()
+        end_pos = cursor.selectionEnd()
+        col = cursor.positionInBlock()
+        
+        start_block = doc.findBlock(start_pos)
+        end_block = doc.findBlock(end_pos)
+        
+        if has_sel and end_pos == end_block.position() and end_block.blockNumber() > start_block.blockNumber():
+            end_block = end_block.previous()
+            
+        start_block_num = start_block.blockNumber()
+        end_block_num = end_block.blockNumber()
+        
+        all_commented = True
+        has_non_empty = False
+        
+        curr = start_block
+        while curr.isValid() and curr.blockNumber() <= end_block_num:
+            txt = curr.text()
+            stripped = txt.lstrip()
+            if len(stripped) > 0:
+                has_non_empty = True
+                if not stripped.startswith('#'):
+                    all_commented = False
+                    break
+            curr = curr.next()
+            
+        if not has_non_empty:
+            all_commented = False
+            
+        cursor.beginEditBlock()
+        curr = start_block
+        while curr.isValid() and curr.blockNumber() <= end_block_num:
+            b_pos = curr.position()
+            b_text = curr.text()
+            line_cursor = QTextCursor(doc)
+            
+            if all_commented:
+                if b_text.startswith('#'):
+                    line_cursor.setPosition(b_pos)
+                    line_cursor.movePosition(QTextCursor.NextCharacter, QTextCursor.KeepAnchor, 1)
+                    line_cursor.removeSelectedText()
+                else:
+                    idx = b_text.find('#')
+                    if idx != -1 and b_text[:idx].strip() == '':
+                        chars_to_delete = 2 if b_text[idx:idx+2] == '# ' else 1
+                        line_cursor.setPosition(b_pos + idx)
+                        line_cursor.movePosition(QTextCursor.NextCharacter, QTextCursor.KeepAnchor, chars_to_delete)
+                        line_cursor.removeSelectedText()
+            else:
+                line_cursor.setPosition(b_pos)
+                line_cursor.insertText('#')
+                
+            curr = curr.next()
+            
+        cursor.endEditBlock()
+        
+        if has_sel:
+            new_cursor = QTextCursor(doc)
+            new_cursor.setPosition(doc.findBlockByNumber(start_block_num).position())
+            last_b = doc.findBlockByNumber(end_block_num)
+            new_cursor.setPosition(last_b.position() + last_b.length() - (1 if last_b.length() > 0 else 0), QTextCursor.KeepAnchor)
+            self.setTextCursor(new_cursor)
+        else:
+            new_cursor = QTextCursor(doc)
+            block = doc.findBlockByNumber(start_block_num)
+            new_col = col + (-1 if all_commented else 1)
+            new_col = max(0, min(new_col, block.length() - 1))
+            new_cursor.setPosition(block.position() + new_col)
+            self.setTextCursor(new_cursor)
     def tab(self, initcursor = None):
         if initcursor == False:
             initcursor = None

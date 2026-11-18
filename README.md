@@ -81,6 +81,10 @@ lpy
   ```
 - **Persistence**: Your selected theme is automatically saved in your settings and remembered across restarts.
 
+### Useful Shortcuts
+
+- **`Ctrl+;`**: **Toggle Comment** — comments the current line or selected lines with `#`. Pressing it again uncomments them. Also accessible from **Edit → Toggle Comment**.
+
 ---
 
 ## Documentation

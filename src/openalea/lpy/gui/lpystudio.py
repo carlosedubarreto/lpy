@@ -44,7 +44,7 @@ from openalea.lpy import *
 
 from openalea.plantgl.gui.qt.compat import *
 from openalea.plantgl.gui.qt.QtCore import QCoreApplication, QEvent, QMutex, QObject, QThread, QWaitCondition, QTimer, Qt, Signal
-from openalea.plantgl.gui.qt.QtGui import QIcon, QPixmap, QTextCursor
+from openalea.plantgl.gui.qt.QtGui import QIcon, QPixmap, QTextCursor, QKeySequence
 from openalea.plantgl.gui.qt.QtWidgets import QApplication, QAction, QDialog, QFileDialog, QInputDialog, QMainWindow, QMessageBox, QTabBar
 try:
     from openalea.plantgl.gui.qt.QtPrintSupport import QPrintDialog, QPrinter
@@ -203,6 +203,10 @@ class LPyWindow(QMainWindow, lsmw.Ui_MainWindow, ComputationTaskManager) :
         self.actionExecute.triggered.connect(self.executeCode) 
         self.actionComment.triggered.connect(self.codeeditor.comment) 
         self.actionUncomment.triggered.connect(self.codeeditor.uncomment) 
+        self.actionToggleComment = QAction("Toggle Comment", self)
+        self.actionToggleComment.setShortcut(QKeySequence("Ctrl+;"))
+        self.actionToggleComment.triggered.connect(self.codeeditor.toggleComment)
+        self.menuEdit.insertAction(self.actionInsertTab, self.actionToggleComment) 
         self.actionInsertTab.triggered.connect(self.codeeditor.tab) 
         self.actionRemoveTab.triggered.connect(self.codeeditor.untab) 
         self.actionSyntax.triggered.connect(self.setSyntaxHighLightActivation) 
