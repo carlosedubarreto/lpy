@@ -30,6 +30,7 @@ from . import lpypreferences
 from .simulation import LpySimulation
 from .killsimulationdialog import KillSimulationDialog
 from .objectpanel import ObjectPanelManager
+from . import theme
 
 try:
     import matplotlib
@@ -234,6 +235,13 @@ class LPyWindow(QMainWindow, lsmw.Ui_MainWindow, ComputationTaskManager) :
         self.menuRecents.triggered.connect(self.recentMenuAction) 
         self.actionClearShellWidget.triggered.connect(self.clearShell)
         self.initSVNMenu()
+        self.currentTheme = 'dark'
+        self.actionDarkTheme = QAction("Dark Theme", self)
+        self.actionDarkTheme.setCheckable(True)
+        self.actionDarkTheme.setChecked(self.currentTheme == 'dark')
+        self.actionDarkTheme.triggered.connect(self.toggleDarkTheme)
+        self.menuView.addAction(self.actionDarkTheme)
+        self.setTheme(self.currentTheme)
         self.printTitle()
         self.centralViewIsGL = False
         self.svnLastRevisionChecked = 0
@@ -432,6 +440,7 @@ class LPyWindow(QMainWindow, lsmw.Ui_MainWindow, ComputationTaskManager) :
         if not self._initialized:
             self.init()
             self._initialized = True
+        theme.set_dark_title_bar(self, getattr(self, 'currentTheme', 'dark') == 'dark')
     def taskRunningEvent(self):
         self.statusBar().showMessage('A task is already running !',5000)
         raise Exception('A task is already running')
@@ -985,6 +994,26 @@ class LPyWindow(QMainWindow, lsmw.Ui_MainWindow, ComputationTaskManager) :
         self.textEditionWatch = False
         self.codeeditor.setTabHighLightActivation(value)
         self.textEditionWatch = True
+    def toggleDarkTheme(self, enabled):
+        self.setTheme('dark' if enabled else 'light')
+    def setTheme(self, theme_name):
+        self.currentTheme = str(theme_name).lower()
+        is_dark = (self.currentTheme == 'dark')
+        theme.apply_theme(self, self.currentTheme)
+        if hasattr(self, 'codeeditor'):
+            self.codeeditor.setTheme(self.currentTheme)
+        if hasattr(self, 'shellwidget') and hasattr(self.shellwidget, 'setTheme'):
+            self.shellwidget.setTheme(self.currentTheme)
+        if hasattr(self, 'actionDarkTheme'):
+            self.actionDarkTheme.setChecked(is_dark)
+        if hasattr(self, 'panelmanager'):
+            try:
+                from .objectpanel import ObjectListDisplay
+                target_obj_theme = ObjectListDisplay.BLACK_THEME if is_dark else ObjectListDisplay.WHITE_THEME
+                for panel in self.panelmanager.getObjectPanels():
+                    panel.view.applyTheme(target_obj_theme)
+            except Exception:
+                pass
     def setCCompilerPath(self,p):
         self.cCompilerPath = str(p)
         if len(self.cCompilerPath) != 0 and not self.cCompilerPath in os.environ['PATH']:
@@ -1069,6 +1098,7 @@ def help():
     print('--help    : print this help')
     print('--version : print version of the software.')
     print('--safe | --no-safe: load settings in a safe or no safe mode')
+    print('--dark | --light: start with dark or light theme')
     print('--run lpyfile: run an lpymodel')
     print()
     print('See http://openalea.gforge.inria.fr/wiki/doku.php?id=packages:vplants:lpy:main for more documentation') 
@@ -1104,6 +1134,14 @@ def main():
         animatemodel(fname)
         return
 
+    forced_theme = None
+    if '--dark' in args:
+        forced_theme = 'dark'
+        args.remove('--dark')
+    elif '--light' in args:
+        forced_theme = 'light'
+        args.remove('--light')
+
     toopen = []
     if len(args) > 1: toopen = list(map(os.path.abspath,[a for a in args[1:] if not a.startswith('-')]))
 
@@ -1119,6 +1157,8 @@ def main():
     splash = doc.splashLPy()
     qapp.processEvents()
     w = LPyWindow()
+    if forced_theme:
+        w.setTheme(forced_theme)
     w.show()    
     for f in toopen:
         w.openfile(f)

@@ -32,13 +32,35 @@ class LpyShellWidget(RichJupyterWidget): #, GraphicalStreamRedirection):
         self.kernel_client.start_channels()
 
         self.kernel.locals = self.kernel.shell.user_ns
+        self.currentTheme = 'dark'
+        self.setTheme(self.currentTheme)
 
         # Multiple Stream Redirection
         # GraphicalStreamRedirection.__init__(self, self.kernel.stdout, self.kernel.stderr)
 
+    def setTheme(self, theme='dark'):
+        self.currentTheme = theme
+        try:
+            from . import theme as lpytheme
+            if lpytheme.is_dark_theme(theme):
+                self.syntax_style = 'monokai'
+                self.style_sheet = lpytheme.DARK_SHELL_STYLESHEET
+            else:
+                self.set_default_style('lightbg')
+        except Exception:
+            try:
+                if str(theme).lower() == 'dark':
+                    self.set_default_style('linux')
+                else:
+                    self.set_default_style('lightbg')
+            except Exception:
+                pass
+
 
 def set_shell_widget(lpywidget):
     ipython_widget = LpyShellWidget(lpywidget.interpreterDock)
+    if hasattr(lpywidget, 'currentTheme'):
+        ipython_widget.setTheme(lpywidget.currentTheme)
     lpywidget.interpreterDock.setWidget(ipython_widget)
 
     kernel = ipython_widget.kernel

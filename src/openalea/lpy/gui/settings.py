@@ -92,6 +92,10 @@ def restoreState(lpywidget):
         if fstr != 'default' and f.fromString(fstr):
             #print 'read font',fstr
             lpywidget.codeeditor.setEditionFont(f)
+    if hasattr(lpywidget, 'setTheme'):
+        default_theme = getattr(lpywidget, 'currentTheme', 'dark')
+        theme_val = str(settings.value('theme', default_theme))
+        lpywidget.setTheme(theme_val)
     settings.endGroup()
     
     #settings.beginGroup('stdout')
@@ -180,6 +184,8 @@ def saveState(lpywidget):
         settings.setValue('editionfont',to_qvariant(lpywidget.codeeditor.editionFont.toString()))
     else:
         settings.setValue('editionfont','default')
+    if hasattr(lpywidget, 'currentTheme'):
+        settings.setValue('theme', to_qvariant(lpywidget.currentTheme))
     settings.endGroup()
     # if not lpywidget.interpreter is None:
     #     settings.beginGroup('stdout')

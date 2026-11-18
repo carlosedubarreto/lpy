@@ -40,33 +40,50 @@ Gallery
 
 Examples of models created with L-Py. Images credits: C. Godin, J. Chopard, F. Boudon. Models credits: C. Godin, F. Boudon, F. Normand, I. Grechi, E. Costes, M. Beziz, Y. Caraglio et al.
 
-=============
-Installation
-=============
-
+======================================
+Installation & Running (with Dark Mode)
+======================================
 
 ``L-Py`` distribution is based on the ``conda`` software environment management system.
 To install conda, you may refer to its installation page: https://docs.conda.io/projects/conda/en/latest/user-guide/install/
 
-To install L-Py, you need to create an environment (named for instance lpy) :
+1. Create and activate the conda environment:
 
 .. code-block:: bash
 
-        >>> conda create -n lpy openalea.lpy -c openalea3 -c conda-forge
-
-The package ``openalea.lpy`` is retrieved from the ``openalea3`` channel (developement) and its dependencies will be taken from ``conda-forge`` channel.
-
-Then, you need to activate the L-Py environment
-
-.. code-block:: bash
-
+        >>> conda create -n lpy python=3.10 openalea.lpy -c openalea3 -c conda-forge -y
         >>> conda activate lpy
 
-And then run L-Py
+2. Link this local GUI code (with Dark Theme) into the conda environment:
+
+On Windows (PowerShell):
+
+.. code-block:: powershell
+
+        >>> Remove-Item -Recurse -Force "$env:USERPROFILE\miniconda3\envs\lpy\Lib\site-packages\openalea\lpy\gui"
+        >>> New-Item -ItemType Junction -Path "$env:USERPROFILE\miniconda3\envs\lpy\Lib\site-packages\openalea\lpy\gui" -Target "D:\_Code\Meu\lpy\src\openalea\lpy\gui"
+
+On Linux / macOS:
+
+.. code-block:: bash
+
+        >>> CONDA_GUI=$(python -c "import openalea.lpy, os; print(os.path.join(os.path.dirname(openalea.lpy.__file__), 'gui'))")
+        >>> rm -rf "$CONDA_GUI"
+        >>> ln -s "$(pwd)/src/openalea/lpy/gui" "$CONDA_GUI"
+
+3. Run L-Py:
 
 .. code-block:: bash
 
         >>> lpy
+
+Dark Theme Controls
+-------------------
+
+- **Automatic**: Starts in Dark Theme by default.
+- **Menu Toggle**: Toggle dark or light theme at any time via **View -> Dark Theme**.
+- **CLI Flags**: ``lpy --dark`` or ``lpy --light``.
+- **Persistence**: Remembers your preferred theme across sessions.
 
 =============
 Documentation

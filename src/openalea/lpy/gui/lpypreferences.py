@@ -67,6 +67,11 @@ class LpyPreferences:
             #    self.widget.systemConsoleButton.setChecked(self.editor.shellwidget.isSysStdOutRedirection() or  self.editor.shellwidget.hasMultipleStdOutRedirection())
             #    self.widget.systemConsoleButton.clicked.connect(self.setOutputRedirection) # QObject.connect(self.widget.systemConsoleButton,SIGNAL('clicked(bool)'),self.setOutputRedirection)
         self.dialog.show()
+        try:
+            from . import theme
+            theme.set_dark_title_bar(self.dialog, getattr(self.editor, 'currentTheme', 'dark') == 'dark')
+        except Exception:
+            pass
     def chooseCCompilerPath(self):
         p = QFileDialog.getExistingDirectory(self.editor, "Choose Compiler Path", self.editor.cCompilerPath )
         if len(p)> 0:

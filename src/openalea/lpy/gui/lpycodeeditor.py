@@ -81,6 +81,27 @@ class LpySyntaxHighlighter(QSyntaxHighlighter):
         self.tabviewactivated = True
         self.lineid = IdGenerator()
         self.linedata = {}
+        self.currentTheme = 'light'
+    def setTheme(self, theme='light'):
+        self.currentTheme = theme
+        try:
+            from . import theme as lpytheme
+            colors = lpytheme.get_syntax_colors(theme)
+        except Exception:
+            colors = None
+
+        if colors:
+            self.lpykeywordFormat.setForeground(QColor(colors['lpykeyword']))
+            self.keywordFormat.setForeground(QColor(colors['keyword']))
+            self.delimiterFormat.setForeground(QColor(colors['delimiter']))
+            self.prodFormat.setForeground(QColor(colors['prod']))
+            self.funcFormat.setForeground(QColor(colors['func']))
+            self.stringFormat.setForeground(QColor(colors['string']))
+            self.numberFormat.setForeground(QColor(colors['number']))
+            self.commentFormat.setForeground(QColor(colors['comment']))
+            self.tabFormat.setBackground(QColor(colors['tab']))
+            self.spaceFormat.setBackground(QColor(colors['space']))
+        self.rehighlight()
     def setDocument(self,doc):
         QSyntaxHighlighter.setDocument(self,doc)
     def genlineid(self):
@@ -237,13 +258,17 @@ class Margin(QWidget):
         self.markers = {}
         self.markerStack = {}
         self.markerType = {}
+        self.textColor = QColor(100,100,100)
+        self.backgroundColor = None
 
     def paintEvent( self, paintEvent ):
         if self.showLines:
+            painter = QPainter(self)
+            if self.backgroundColor:
+                painter.fillRect(paintEvent.rect(), self.backgroundColor)
             maxheight = self.editor.viewport().height()
             maxline = self.editor.document().blockCount()
-            painter = QPainter(self)
-            painter.setPen(QPen(QColor(100,100,100)))
+            painter.setPen(QPen(self.textColor))
             h = 0
             line = -1
             while h < maxheight and line < maxline:
@@ -470,10 +495,31 @@ class LpyCodeEditor(QTextEdit):
     def setLpyDocument(self,document):
         self.syntaxhighlighter.setDocument(document)
         LpyCodeEditor.setDocument(self,document)
-        self.syntaxhighlighter.rehighlight()
+        if hasattr(self, 'currentTheme'):
+            self.syntaxhighlighter.setTheme(self.currentTheme)
+        else:
+            self.syntaxhighlighter.rehighlight()
         self.applyZoom()
         if not self.editionFont is None and self.editionFont!= document.defaultFont() :
             document.setDefaultFont(self.editionFont)
+    def setTheme(self, theme='light'):
+        self.currentTheme = theme
+        self.syntaxhighlighter.setTheme(theme)
+        try:
+            from . import theme as lpytheme
+            is_dark = lpytheme.is_dark_theme(theme)
+            if is_dark:
+                self.setStyleSheet(lpytheme.DARK_EDITOR_STYLESHEET)
+                self.sidebar.textColor = QColor(115, 125, 140)
+                self.sidebar.backgroundColor = QColor(27, 30, 35)
+            else:
+                self.setStyleSheet(lpytheme.LIGHT_EDITOR_STYLESHEET)
+                self.sidebar.textColor = QColor(100, 100, 100)
+                self.sidebar.backgroundColor = None
+        except Exception:
+            pass
+        self.sidebar.update()
+        self.syntaxhighlighter.rehighlight()
     def zoomInEvent(self):
         self.zoomFactor += 1
         self.zoomIn()
