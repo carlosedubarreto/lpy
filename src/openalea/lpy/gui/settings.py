@@ -50,6 +50,9 @@ def restoreState(lpywidget):
     lpywidget.fitRunView = settings.value('fitRunView',lpywidget.fitRunView)=='true' 
     lpywidget.setIntegratedView3D(settings.value('integratedView',lpywidget.use_own_view3D)=='true')
     lpywidget.displayMetaInfo = settings.value('displayMetaInfoAtRun',lpywidget.displayMetaInfo)=='true'
+    lpywidget.refocusLpyOnRun = settings.value('refocusLpyOnRun', 'true') == 'true'
+    if hasattr(lpywidget, 'actionRefocusLpy'):
+        lpywidget.actionRefocusLpy.setChecked(lpywidget.refocusLpyOnRun)
     settings.endGroup()
     settings.beginGroup('profiling')
     try:
@@ -159,6 +162,7 @@ def saveState(lpywidget):
     settings.setValue('fitRunView',to_qvariant(lpywidget.fitRunView)) 
     settings.setValue('integratedView',to_qvariant(lpywidget.use_own_view3D))
     settings.setValue('displayMetaInfoAtRun',to_qvariant(lpywidget.displayMetaInfo))
+    settings.setValue('refocusLpyOnRun', to_qvariant(getattr(lpywidget, 'refocusLpyOnRun', True)))
     settings.endGroup()
     settings.beginGroup('compilation')
     

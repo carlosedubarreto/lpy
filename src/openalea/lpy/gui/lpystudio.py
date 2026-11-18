@@ -187,8 +187,17 @@ class LPyWindow(QMainWindow, lsmw.Ui_MainWindow, ComputationTaskManager) :
         self.actionImportCpfgFile.triggered.connect(lambda : self.importcpfgfile()) 
         self.actionClear.triggered.connect(self.clearHistory) 
         self.actionSaveSession.triggered.connect(self.saveSession) 
+        self.actionRun.setShortcuts([QKeySequence("Ctrl+."), QKeySequence("Ctrl+R")])
+        self.actionAnimate.setShortcuts([QKeySequence("Ctrl+Shift+."), QKeySequence("Ctrl+>")])
         self.actionRun.triggered.connect(self.run) 
         self.actionAnimate.triggered.connect(self.animate) 
+        self.refocusLpyOnRun = True
+        self.actionRefocusLpy = QAction("Keep L-Py Focused on Run", self)
+        self.actionRefocusLpy.setCheckable(True)
+        self.actionRefocusLpy.setChecked(self.refocusLpyOnRun)
+        self.actionRefocusLpy.triggered.connect(self.setRefocusLpyOnRun)
+        self.menuL_systems.addSeparator()
+        self.menuL_systems.addAction(self.actionRefocusLpy) 
         self.actionStep.triggered.connect(self.step) 
         self.actionRewind.triggered.connect(self.rewind) 
         self.actionStepInterpretation.triggered.connect(self.stepInterpretation) 
@@ -471,7 +480,9 @@ class LPyWindow(QMainWindow, lsmw.Ui_MainWindow, ComputationTaskManager) :
     def viewer_plot(self,scene):
         if self.use_own_view3D:
             self.setView3DCentral()
-        self.viewer.display(scene)            
+        self.viewer.display(scene)
+        if getattr(self, 'refocusLpyOnRun', True):
+            QTimer.singleShot(150, self.refocusLpy)            
     def plotScene(self,scene):
       if self.thread() != QThread.currentThread():
         #Viewer.display(scene)
@@ -615,6 +626,8 @@ class LPyWindow(QMainWindow, lsmw.Ui_MainWindow, ComputationTaskManager) :
                 primitiveChanged = self.primitiveChanged
                 del self.primitiveChanged
                 self.run(True,primitiveChanged)
+        if getattr(self, 'refocusLpyOnRun', True):
+            self.refocusLpy()
     def printTitle(self):
         fname = self.currentSimulation().getFileName()
         self.setWindowFilePath(fname)
@@ -791,6 +804,9 @@ class LPyWindow(QMainWindow, lsmw.Ui_MainWindow, ComputationTaskManager) :
         task.checkRerun = True
         task.fitRunView = self.fitRunView
         self.registerTask(task)
+        if getattr(self, 'refocusLpyOnRun', True):
+            QTimer.singleShot(150, self.refocusLpy)
+            QTimer.singleShot(400, self.refocusLpy)
       except:
         self.graberror()
         self.releaseCR()
@@ -888,6 +904,9 @@ class LPyWindow(QMainWindow, lsmw.Ui_MainWindow, ComputationTaskManager) :
         task = ComputationTask(simu.animate,simu.post_animate,simu.pre_animate,cleanupprocess=simu.cleanup)
         task.fitAnimationView = self.fitAnimationView
         self.registerTask(task)
+        if getattr(self, 'refocusLpyOnRun', True):
+            QTimer.singleShot(150, self.refocusLpy)
+            QTimer.singleShot(400, self.refocusLpy)
       except:
         self.graberror()
         self.releaseCR()
@@ -1018,6 +1037,25 @@ class LPyWindow(QMainWindow, lsmw.Ui_MainWindow, ComputationTaskManager) :
                     panel.view.applyTheme(target_obj_theme)
             except Exception:
                 pass
+    def setRefocusLpyOnRun(self, enabled):
+        self.refocusLpyOnRun = bool(enabled)
+        if hasattr(self, 'actionRefocusLpy'):
+            self.actionRefocusLpy.setChecked(self.refocusLpyOnRun)
+    def refocusLpy(self):
+        if not getattr(self, 'refocusLpyOnRun', True):
+            return
+        try:
+            self.raise_()
+            self.activateWindow()
+            if hasattr(self, 'codeeditor'):
+                self.codeeditor.setFocus()
+            import sys
+            if sys.platform == 'win32':
+                import ctypes
+                hwnd = int(self.winId())
+                ctypes.windll.user32.SetForegroundWindow(hwnd)
+        except Exception:
+            pass
     def setCCompilerPath(self,p):
         self.cCompilerPath = str(p)
         if len(self.cCompilerPath) != 0 and not self.cCompilerPath in os.environ['PATH']:

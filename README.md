@@ -81,9 +81,12 @@ lpy
   ```
 - **Persistence**: Your selected theme is automatically saved in your settings and remembered across restarts.
 
-### Useful Shortcuts
+### Useful Shortcuts & Features
 
-- **`Ctrl+;`**: **Toggle Comment** — comments the current line or selected lines with `#`. Pressing it again uncomments them. Also accessible from **Edit → Toggle Comment**.
+- **`Ctrl+.`**: **Run Model** — executes the current L-system model.
+- **`Ctrl+Shift+.`** (or **`Ctrl+>`**): **Animate Model** — runs the simulation growth animation.
+- **`Ctrl+;`**: **Toggle Comment** — comments the current line or selected block with `#`. Pressing it again uncomments them. Also accessible from **Edit → Toggle Comment**.
+- **Keep L-Py Focused on Run** (Enabled by default): When running or animating, PlantGL opens but focus immediately returns to L-Py so you can keep typing without switching windows. You can toggle this behavior anytime under **L-systems → Keep L-Py Focused on Run**.
 
 ---
 
